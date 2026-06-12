@@ -125,26 +125,45 @@ function ensureAudio() {
     if (actx.state === "suspended") actx.resume();
   } catch (e) {}
 }
-function blip(f0, f1, dur, vol, delay) {
+// 短くきっぱり鳴るピング音（音程はほんの少しだけ下げて締まりを出す）
+function ping(f, dur, vol, delay) {
   try {
     if (!actx) return;
     const t = actx.currentTime + (delay || 0);
     const o = actx.createOscillator(), g = actx.createGain();
-    o.type = "triangle";
-    o.frequency.setValueAtTime(f0, t);
-    o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    o.type = "square";
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f * 0.96, t + dur);
     g.gain.setValueAtTime(vol, t);
     g.gain.exponentialRampToValueAtTime(0.001, t + dur);
     o.connect(g); g.connect(actx.destination);
     o.start(t); o.stop(t + dur);
   } catch (e) {}
 }
-// 合体音：大きい数ほど高い音。128以上はキラッと2段鳴り
+// 立ち上がりの「チッ」というアタックノイズ
+function snap(delay, vol) {
+  try {
+    if (!actx) return;
+    const t = actx.currentTime + (delay || 0);
+    const len = 0.022;
+    const buf = actx.createBuffer(1, Math.floor(actx.sampleRate * len), actx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
+    const src = actx.createBufferSource(); src.buffer = buf;
+    const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2600;
+    const g = actx.createGain(); g.gain.value = vol || 0.14;
+    src.connect(hp); hp.connect(g); g.connect(actx.destination);
+    src.start(t);
+  } catch (e) {}
+}
+// 合体音：「カキッ」と短く硬い音。大きい数ほど高く、128以上は2連でキレを足す
 function mergeSound(v) {
   const k = Math.round(Math.log2(v));
-  const f = 240 + k * 45;
-  blip(f, f * 1.5, 0.13, 0.18);
-  if (v >= 128) blip(f * 2, f * 3, 0.12, 0.1, 0.06);
+  const f = 520 + k * 70;
+  snap(0);
+  ping(f, 0.06, 0.13);
+  ping(f * 2, 0.045, 0.05, 0.012);
+  if (v >= 128) { snap(0.055, 0.1); ping(f * 1.5, 0.055, 0.11, 0.055); }
 }
 // 数字ごとに全部ちがう色（黄金角配色：隣の数ほど色が大きく変わる）
 function colorFor(v) {
