@@ -127,6 +127,7 @@ function colorFor(v) {
 
 // ===== 状態 =====
 const SIZE = 30;
+const SPAWN_PER_MOVE = 20;
 let grid, tiles, nextId, score, moved, won, awaiting, over;
 let best = +(localStorage.getItem("classic2048Best") || 0);
 let bestTile = +(localStorage.getItem("classic2048BestTile") || 0);
@@ -213,7 +214,7 @@ function newGame() {
   overlay.classList.remove("show");
   updateHud();
   layout();
-  spawn(); spawn();
+  for (let i = 0; i < SPAWN_PER_MOVE; i++) spawn();
 }
 
 function emptyCells() {
@@ -297,7 +298,7 @@ function move(dir) {
     const seq = ++moveCounter;
     setTimeout(() => {
       if (seq !== moveCounter) return;
-      spawn();
+      for (let i = 0; i < SPAWN_PER_MOVE; i++) spawn();
       if (!canMove()) gameOver();
     }, 130);
   }
