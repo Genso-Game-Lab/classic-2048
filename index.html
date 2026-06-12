@@ -85,7 +85,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>2048<small>ちょうこうだい 30×30 ばんで 2048 をつくれ！</small></h1>
+    <h1>2048<small>ちょうこうだい 30×30 ばん！クリアは 8192</small></h1>
     <div class="stats">
       <div class="stat"><div class="label">スコア</div><div class="value" id="score">0</div></div>
       <div class="stat"><div class="label">ベスト</div><div class="value" id="best">0</div></div>
@@ -115,7 +115,7 @@
 
 <script>
 "use strict";
-const WIN_V = 2048;
+const WIN_V = 8192;
 // 数字ごとに全部ちがう色（黄金角配色：隣の数ほど色が大きく変わる）
 function colorFor(v) {
   const k = Math.round(Math.log2(v));
@@ -127,7 +127,7 @@ function colorFor(v) {
 
 // ===== 状態 =====
 const SIZE = 30;
-const SPAWN_PER_MOVE = 50;
+const SPAWN_PER_MOVE = 70;
 let grid, tiles, nextId, score, moved, won, awaiting, over;
 let best = +(localStorage.getItem("classic2048Best") || 0);
 let bestTile = +(localStorage.getItem("classic2048BestTile") || 0);
@@ -341,8 +341,8 @@ function onCreate(val) {
     won = true;
     awaiting = true;
     setTimeout(() => {
-      ovTitle.textContent = "🎉 2048たっせい！";
-      ovText.textContent = "おめでとう！このまま4096、8192…とどこまでも続けられるよ。";
+      ovTitle.textContent = `🎉 ${WIN_V}たっせい！`;
+      ovText.textContent = `おめでとう！このまま${WIN_V * 2}、${WIN_V * 4}…とどこまでも続けられるよ。`;
       ovContinue.style.display = "";
       ovUndo.style.display = "none";
       overlay.classList.add("show");
