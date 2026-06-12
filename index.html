@@ -85,7 +85,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>2048<small>同じ数をくっつけて 2048 をつくれ！</small></h1>
+    <h1>2048<small>ひろい7×7ばんで 2048 をつくれ！</small></h1>
     <div class="stats">
       <div class="stat"><div class="label">スコア</div><div class="value" id="score">0</div></div>
       <div class="stat"><div class="label">ベスト</div><div class="value" id="best">0</div></div>
@@ -116,23 +116,17 @@
 <script>
 "use strict";
 const WIN_V = 2048;
-const COLORS = {
-  2:    ["#eee4da", "#776e65"],
-  4:    ["#ede0c8", "#776e65"],
-  8:    ["#f2b179", "#ffffff"],
-  16:   ["#f59563", "#ffffff"],
-  32:   ["#f67c5f", "#ffffff"],
-  64:   ["#f65e3b", "#ffffff"],
-  128:  ["#edcf72", "#ffffff"],
-  256:  ["#edcc61", "#ffffff"],
-  512:  ["#edc850", "#ffffff"],
-  1024: ["#edc53f", "#ffffff"],
-  2048: ["#edc22e", "#ffffff"],
-};
-const BIG_COLOR = ["#3c3a32", "#ffffff"];
+// 数字ごとに全部ちがう色（黄金角配色：隣の数ほど色が大きく変わる）
+function colorFor(v) {
+  const k = Math.round(Math.log2(v));
+  const hue = Math.round((k * 137.508) % 360);
+  const bg = `linear-gradient(135deg, hsl(${hue},80%,58%), hsl(${hue},74%,43%))`;
+  const fg = (hue > 40 && hue < 80) ? "#1e293b" : "#ffffff";
+  return [bg, fg];
+}
 
 // ===== 状態 =====
-const SIZE = 4;
+const SIZE = 7;
 let grid, tiles, nextId, score, moved, won, awaiting, over;
 let best = +(localStorage.getItem("classic2048Best") || 0);
 let bestTile = +(localStorage.getItem("classic2048BestTile") || 0);
@@ -157,7 +151,7 @@ const tileEls = new Map();
 // ===== レイアウト =====
 function layout() {
   const w = boardEl.clientWidth;
-  gap = Math.round(w * 0.025);
+  gap = Math.round(w * 0.014);
   cell = (w - gap * (SIZE + 1)) / SIZE;
   boardEl.querySelectorAll(".bg-cell").forEach(e => e.remove());
   for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
@@ -187,7 +181,7 @@ function positionEl(t) {
 function makeEl(t, cls) {
   const el = document.createElement("div");
   el.className = "tile" + (cls ? ` ${cls}` : "");
-  const [bg, fg] = COLORS[t.v] || BIG_COLOR;
+  const [bg, fg] = colorFor(t.v);
   el.style.background = bg;
   el.style.color = fg;
   el.textContent = t.v;
