@@ -85,7 +85,7 @@
 <body>
 <div class="wrap">
   <header>
-    <h1>2048<small>ひろめの 5×5 ばんで 2048 をつくれ！</small></h1>
+    <h1>2048<small>同じ数をくっつけて 2048 をつくれ！</small></h1>
     <div class="stats">
       <div class="stat"><div class="label">スコア</div><div class="value" id="score">0</div></div>
       <div class="stat"><div class="label">ベスト</div><div class="value" id="best">0</div></div>
@@ -126,7 +126,7 @@ function colorFor(v) {
 }
 
 // ===== 状態 =====
-const SIZE = 5;
+const SIZE = 4;
 const SPAWN_PER_MOVE = 1;
 let grid, tiles, nextId, score, moved, won, awaiting, over;
 let best = +(localStorage.getItem("classic2048Best") || 0);
