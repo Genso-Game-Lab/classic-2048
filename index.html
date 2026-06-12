@@ -125,45 +125,27 @@ function ensureAudio() {
     if (actx.state === "suspended") actx.resume();
   } catch (e) {}
 }
-// 短くきっぱり鳴るピング音（音程はほんの少しだけ下げて締まりを出す）
-function ping(f, dur, vol, delay) {
+// 「ぽんっ」：高い音から一気に下がるサイン波（水玉がはじける音）
+function pop(f, vol, delay) {
   try {
     if (!actx) return;
     const t = actx.currentTime + (delay || 0);
     const o = actx.createOscillator(), g = actx.createGain();
-    o.type = "square";
-    o.frequency.setValueAtTime(f, t);
-    o.frequency.exponentialRampToValueAtTime(f * 0.96, t + dur);
+    o.type = "sine";
+    o.frequency.setValueAtTime(f * 1.6, t);
+    o.frequency.exponentialRampToValueAtTime(f * 0.7, t + 0.09);
     g.gain.setValueAtTime(vol, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
     o.connect(g); g.connect(actx.destination);
-    o.start(t); o.stop(t + dur);
+    o.start(t); o.stop(t + 0.12);
   } catch (e) {}
 }
-// 立ち上がりの「チッ」というアタックノイズ
-function snap(delay, vol) {
-  try {
-    if (!actx) return;
-    const t = actx.currentTime + (delay || 0);
-    const len = 0.022;
-    const buf = actx.createBuffer(1, Math.floor(actx.sampleRate * len), actx.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 2);
-    const src = actx.createBufferSource(); src.buffer = buf;
-    const hp = actx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 2600;
-    const g = actx.createGain(); g.gain.value = vol || 0.14;
-    src.connect(hp); hp.connect(g); g.connect(actx.destination);
-    src.start(t);
-  } catch (e) {}
-}
-// 合体音：「カキッ」と短く硬い音。大きい数ほど高く、128以上は2連でキレを足す
+// 合体音：「ぽんっ」。大きい数ほど高く、128以上は「ぽんぽんっ」
 function mergeSound(v) {
   const k = Math.round(Math.log2(v));
-  const f = 520 + k * 70;
-  snap(0);
-  ping(f, 0.06, 0.13);
-  ping(f * 2, 0.045, 0.05, 0.012);
-  if (v >= 128) { snap(0.055, 0.1); ping(f * 1.5, 0.055, 0.11, 0.055); }
+  const f = 360 + k * 45;
+  pop(f, 0.25);
+  if (v >= 128) pop(f * 1.3, 0.18, 0.09);
 }
 // 数字ごとに全部ちがう色（黄金角配色：隣の数ほど色が大きく変わる）
 function colorFor(v) {
