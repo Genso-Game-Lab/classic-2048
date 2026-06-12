@@ -116,6 +116,36 @@
 <script>
 "use strict";
 const WIN_V = 2048;
+
+// ===== 効果音 =====
+let actx = null;
+function ensureAudio() {
+  try {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+  } catch (e) {}
+}
+function blip(f0, f1, dur, vol, delay) {
+  try {
+    if (!actx) return;
+    const t = actx.currentTime + (delay || 0);
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t + dur);
+  } catch (e) {}
+}
+// 合体音：大きい数ほど高い音。128以上はキラッと2段鳴り
+function mergeSound(v) {
+  const k = Math.round(Math.log2(v));
+  const f = 240 + k * 45;
+  blip(f, f * 1.5, 0.13, 0.18);
+  if (v >= 128) blip(f * 2, f * 3, 0.12, 0.1, 0.06);
+}
 // 数字ごとに全部ちがう色（黄金角配色：隣の数ほど色が大きく変わる）
 function colorFor(v) {
   const k = Math.round(Math.log2(v));
@@ -257,6 +287,7 @@ function move(dir) {
   const rows = [...Array(SIZE).keys()]; if (v.r === 1) rows.reverse();
   const cols = [...Array(SIZE).keys()]; if (v.c === 1) cols.reverse();
   moved = false;
+  let mergedMax = 0;
   for (const t of tiles.values()) t.mergedNow = false;
 
   for (const r of rows) for (const c of cols) {
@@ -280,6 +311,7 @@ function move(dir) {
       makeEl(m, "pop");
       score += m.v;
       moved = true;
+      mergedMax = Math.max(mergedMax, m.v);
       onCreate(m.v);
     } else if (nr !== r || nc !== c) {
       grid[r][c] = null;
@@ -291,6 +323,7 @@ function move(dir) {
   }
 
   if (moved) {
+    if (mergedMax) mergeSound(mergedMax);
     undoState = snap;
     updateUndoBtn();
     if (score > best) { best = score; localStorage.setItem("classic2048Best", best); }
@@ -394,11 +427,12 @@ document.addEventListener("keydown", e => {
     w: "up", s: "down", a: "left", d: "right",
   };
   const dir = map[e.key];
-  if (dir) { e.preventDefault(); move(dir); }
+  if (dir) { e.preventDefault(); ensureAudio(); move(dir); }
 });
 
 let sx = 0, sy = 0, swiping = false;
 document.addEventListener("touchstart", e => {
+  ensureAudio();
   if (e.touches.length !== 1) return;
   sx = e.touches[0].clientX; sy = e.touches[0].clientY; swiping = true;
 }, { passive: true });
