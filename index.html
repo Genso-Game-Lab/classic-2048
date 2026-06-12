@@ -125,27 +125,26 @@ function ensureAudio() {
     if (actx.state === "suspended") actx.resume();
   } catch (e) {}
 }
-// 「ぽんっ」：高い音から一気に下がるサイン波（水玉がはじける音）
-function pop(f, vol, delay) {
+function blip(f0, f1, dur, vol, delay) {
   try {
     if (!actx) return;
     const t = actx.currentTime + (delay || 0);
     const o = actx.createOscillator(), g = actx.createGain();
-    o.type = "sine";
-    o.frequency.setValueAtTime(f * 1.6, t);
-    o.frequency.exponentialRampToValueAtTime(f * 0.7, t + 0.09);
+    o.type = "triangle";
+    o.frequency.setValueAtTime(f0, t);
+    o.frequency.exponentialRampToValueAtTime(f1, t + dur);
     g.gain.setValueAtTime(vol, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
     o.connect(g); g.connect(actx.destination);
-    o.start(t); o.stop(t + 0.12);
+    o.start(t); o.stop(t + dur);
   } catch (e) {}
 }
-// 合体音：「ぽんっ」。大きい数ほど高く、128以上は「ぽんぽんっ」
+// 合体音：大きい数ほど高い音。128以上はキラッと2段鳴り
 function mergeSound(v) {
   const k = Math.round(Math.log2(v));
-  const f = 360 + k * 45;
-  pop(f, 0.25);
-  if (v >= 128) pop(f * 1.3, 0.18, 0.09);
+  const f = 240 + k * 45;
+  blip(f, f * 1.5, 0.13, 0.18);
+  if (v >= 128) blip(f * 2, f * 3, 0.12, 0.1, 0.06);
 }
 // 数字ごとに全部ちがう色（黄金角配色：隣の数ほど色が大きく変わる）
 function colorFor(v) {
